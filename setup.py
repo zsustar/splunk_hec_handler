@@ -2,13 +2,13 @@ from setuptools import setup
 
 setup(
     name = 'splunk_http_handler',
-    version = '1.0.0',
+    version = '1.0.1',
     license = 'MIT License',
     description = 'A Python logging handler that sends your logs to Splunk over HTTP event collector',
     long_description = open('README.md').read(),
     author = 'MEV, LLC',
     author_email = 'vlad.shevtsov@mev.com',
-    url = 'https://github.com/vlad-shevtsov-mev/splunk_http_handler',
+    url = 'https://github.com/vavarachen/splunk_http_handler',
     packages = ['splunk_http_handler'],
     install_requires = ['requests >= 2.6.0, < 3.0.0', 'ast', 'mock'],
     classifiers = [
