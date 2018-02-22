@@ -63,7 +63,7 @@ class SplunkHttpHandler(logging.Handler):
         event.update(self.kwargs)
 
         # Use timestamp from event if available
-        if body.has_key('time'):
+        if hasattr(body, 'time'):
             event['time'] = body['time']
         else:
             event['time'] = time.time()
