@@ -3,11 +3,11 @@
 2. All messages are logged as '_json' sourcetype by default.
 3. A dictionary with 'log_level' and 'message' keys are constructed for logging records of type string.
 
-![String log record representation in Splunk](https://github.com/vavarachen/splunk_http_handler/resources/str_record.png)
+![String log record representation in Splunk](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/str_record.png)
 
 4. Dictionary objects are preserved as JSON.
 
-![Dictionary log record representation in Splunk](https://github.com/vavarachen/splunk_http_handler/resources/dict_record.png)
+![Dictionary log record representation in Splunk](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/dict_record.png)
 
 5. If log record (dict) does not contains a '_time' field,  one is added with the value set to current time.
 
