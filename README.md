@@ -15,11 +15,11 @@
 
 ## Basic
 ```
-from splunk_http_handler import SplunkHttpHandler
+from splunk_http_handler import SplunkHecHandler
 import logging
 
 log = logging.getLogger('')
-log.addHandler(SplunkHttpHandler(host, token))
+log.addHandler(SplunkHecHandler(host, token))
 log.setLevel('INFO')
 log.info("Testing")
 ```
@@ -27,17 +27,17 @@ You should see the log message in your Splunk search.
 
 
 ## HTTPS Example
-Additiona parameters can be passed to specify port, protocol, ssl verification.
+Additional parameters can be passed to specify port, protocol, ssl verification.
 
 ```
-log.addHandler(SplunkHttpHandler(host, token, port=8080, protocol='https', ssl_verify=True))
+log.addHandler(SplunkHecHandler(host, token, port=8080, protocol='https', ssl_verify=True))
 ```
 
 ## Metadata Override
 To override source, sourcetype and hostname:
 
 ```
-log.addHandler(SplunkHttpHandler(
+log.addHandler(SplunkHecHandler(
                 host, token, port=8080, protocol='https', ssl_verify=True,
                 source='custom_source_string', sourcetype='valid_sourceytype', hostname='hostname_override'
                 ))
