@@ -1,15 +1,14 @@
+from splunk_hec_handler import SplunkHecHandler
 import unittest
 import mock
-import ast
 import sys
 import time
 import logging
 import json
-sys.path.append('../splunk_http_handler')
-from splunk_http_handler import SplunkHttpHandler
+sys.path.append('../splunk_hec_handler')
 
-HOST = 'host'
-PORT = 1234
+HOST = 'localhost'
+PORT = 8080
 TOKEN = 'token'
 HOSTNAME = 'hostname'
 TIMESTAMP = time.time()
@@ -17,6 +16,7 @@ SOURCE = 'source'
 RECORD_PLAIN = 'plain text'
 RECORD_DICT = "{ 'dict': 'record' }"
 URL = "http://{0}:{1}/services/collector".format(HOST, PORT)
+
 
 def mock_response(fixture=None, status=200):
     response = mock.Mock()
@@ -29,9 +29,10 @@ def mock_response(fixture=None, status=200):
     response.status_code = status
     return response
 
-class TestSplunkHttpHandler(unittest.TestCase):
+
+class TestSplunkHecHandler(unittest.TestCase):
     def setUp(self):
-        self.splunk = SplunkHttpHandler(
+        self.splunk = SplunkHecHandler(
             host=HOST,
             port=PORT,
             token=TOKEN,
@@ -41,7 +42,7 @@ class TestSplunkHttpHandler(unittest.TestCase):
 
     def test_init(self):
         self.assertIsNotNone(self.splunk)
-        self.assertIsInstance(self.splunk, SplunkHttpHandler)
+        self.assertIsInstance(self.splunk, SplunkHecHandler)
         self.assertIsInstance(self.splunk, logging.Handler)
         self.assertEqual(self.splunk.host, HOST)
         self.assertEqual(self.splunk.port, PORT)
@@ -70,10 +71,11 @@ class TestSplunkHttpHandler(unittest.TestCase):
 
         requests.post.assert_called_once_with(
             URL,
-            headers={ 'Authorization': "Splunk {}".format(TOKEN) },
+            headers={'Authorization': "Splunk {}".format(TOKEN)},
             verify=False,
             data=request_payload
         )
+
 
 if __name__ == '__main__':
     unittest.main()
