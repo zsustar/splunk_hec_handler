@@ -1,80 +1,67 @@
-from splunk_hec_handler import SplunkHecHandler
-import unittest
-import mock
-import sys
-import time
 import logging
-import json
-sys.path.append('../splunk_hec_handler')
+import unittest
+import time
 
-HOST = 'localhost'
-PORT = 8080
-TOKEN = 'token'
-HOSTNAME = 'hostname'
-TIMESTAMP = time.time()
-SOURCE = 'source'
-RECORD_PLAIN = 'plain text'
-RECORD_DICT = "{ 'dict': 'record' }"
-URL = "http://{0}:{1}/services/collector".format(HOST, PORT)
+from splunk_hec_handler import SplunkHecHandler
 
+# These are intentionally different than the kwarg defaults
+SPLUNK_PROTO = 'https'
+SPLUNK_HOST = 'splunkfw.domain.tld'
+SPLUNK_PORT = 8080
+SPLUNK_TOKEN = 'EA33046C-6FEC-4DC0-AC66-4326E58B55C3'
+CLIENT_HOSTNAME = 'test_host'
+SPLUNK_SOURCE = 'test_source'
+SPLUNK_SOURCETYPE = 'test_sourcetype'
+SPLUNK_VERIFY = False
 
-def mock_response(fixture=None, status=200):
-    response = mock.Mock()
-    if fixture is None:
-        response.text = ''
-    elif isinstance(fixture, dict):
-        response.text = str(fixture)
-    else:
-        response.text = load_fixture(fixture)
-    response.status_code = status
-    return response
+RECEIVER_URL = '%s://%s:%s/services/collector' % (SPLUNK_PROTO, SPLUNK_HOST, SPLUNK_PORT)
 
 
 class TestSplunkHecHandler(unittest.TestCase):
     def setUp(self):
-        self.splunk = SplunkHecHandler(
-            host=HOST,
-            port=PORT,
-            token=TOKEN,
-            hostname=HOSTNAME,
-            source=SOURCE
+        self.splunk_handler = SplunkHecHandler(
+            proto=SPLUNK_PROTO,
+            host=SPLUNK_HOST,
+            port=SPLUNK_PORT,
+            token=SPLUNK_TOKEN,
+            hostname=CLIENT_HOSTNAME,
+            source=SPLUNK_SOURCE,
+            sourcetype=SPLUNK_SOURCETYPE,
+            ssl_verify=SPLUNK_VERIFY,
         )
+        self.splunk_handler.testing = True
+
+    def tearDown(self):
+        self.splunk_handler = None
 
     def test_init(self):
-        self.assertIsNotNone(self.splunk)
-        self.assertIsInstance(self.splunk, SplunkHecHandler)
-        self.assertIsInstance(self.splunk, logging.Handler)
-        self.assertEqual(self.splunk.host, HOST)
-        self.assertEqual(self.splunk.port, PORT)
-        self.assertEqual(self.splunk.token, TOKEN)
-        self.assertEqual(self.splunk.hostname, HOSTNAME)
-        self.assertEqual(self.splunk.source, SOURCE)
+        self.assertIsNotNone(self.splunk_handler)
+        self.assertIsInstance(self.splunk_handler, SplunkHecHandler)
+        self.assertIsInstance(self.splunk_handler, logging.Handler)
+        self.assertEqual(self.splunk_handler.proto, SPLUNK_PROTO)
+        self.assertIn(self.splunk_handler.proto, ['http', 'https'])
+        self.assertEqual(self.splunk_handler.host, SPLUNK_HOST)
+        self.assertEqual(self.splunk_handler.port, SPLUNK_PORT)
+        self.assertIn(self.splunk_handler.port, range(0,65535))
+        self.assertEqual(self.splunk_handler.token, SPLUNK_TOKEN)
+        self.assertEqual(self.splunk_handler.hostname, CLIENT_HOSTNAME)
+        self.assertEqual(self.splunk_handler.source, SPLUNK_SOURCE)
+        self.assertEqual(self.splunk_handler.sourcetype, SPLUNK_SOURCETYPE)
+        self.assertEqual(self.splunk_handler.ssl_verify, SPLUNK_VERIFY)
+        self.assertIsInstance(self.splunk_handler.ssl_verify, bool)
 
-    @mock.patch('time.time', mock.MagicMock(return_value=TIMESTAMP))
-    @mock.patch('splunk_http_handler.requests')
-    def test_logging(self, requests):
-        log = logging.getLogger('test')
-        log.addHandler(self.splunk)
-        log.warning('Hello')
+    def test_splunk_worker(self):
+        # Silence root logger
+        logger = logging.getLogger('')
+        for h in logger.handlers:
+            logger.removeHandler(h)
 
-        request_payload = json.dumps({
-            'host': HOSTNAME,
-            'source': SOURCE,
-            'time': TIMESTAMP,
-            'event': {
-                'log_level': 'WARNING',
-                'message': 'Hello'
-            }
-        })
+        logger = logging.getLogger('hec_test')
+        logger.addHandler(self.splunk_handler)
+        logger.warning('hello!')
 
-        requests.post.response_value = mock_response()
-
-        requests.post.assert_called_once_with(
-            URL,
-            headers={'Authorization': "Splunk {}".format(TOKEN)},
-            verify=False,
-            data=request_payload
-        )
+        expected_output = '{"message": "hello!", "host": "%s", "source": "%s", "sourcetype": "%s", "time": %d}' \
+                          % (CLIENT_HOSTNAME, SPLUNK_SOURCE, SPLUNK_SOURCETYPE, time.time())
 
 
 if __name__ == '__main__':
