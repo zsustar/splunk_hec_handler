@@ -50,19 +50,6 @@ class TestSplunkHecHandler(unittest.TestCase):
         self.assertEqual(self.splunk_handler.ssl_verify, SPLUNK_VERIFY)
         self.assertIsInstance(self.splunk_handler.ssl_verify, bool)
 
-    def test_splunk_worker(self):
-        # Silence root logger
-        logger = logging.getLogger('')
-        for h in logger.handlers:
-            logger.removeHandler(h)
-
-        logger = logging.getLogger('hec_test')
-        logger.addHandler(self.splunk_handler)
-        logger.warning('hello!')
-
-        expected_output = '{"message": "hello!", "host": "%s", "source": "%s", "sourcetype": "%s", "time": %d}' \
-                          % (CLIENT_HOSTNAME, SPLUNK_SOURCE, SPLUNK_SOURCETYPE, time.time())
-
 
 if __name__ == '__main__':
     unittest.main()
