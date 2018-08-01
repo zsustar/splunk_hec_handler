@@ -15,30 +15,38 @@
 
 ## Basic
 ```
-from splunk_http_handler import SplunkHecHandler
 import logging
+from splunk_hec_handler import SplunkHecHandler
+logger = logging.getLogger('SplunkHecHandlerExample')
+logger.setLevel(logging.DEBUG)
 
-log = logging.getLogger('')
-log.addHandler(SplunkHecHandler(host, token))
-log.setLevel('INFO')
-log.info("Testing")
+# If using self-signed certificate, set ssl_verify to False
+# If using http, set proto to http
+splunk_handler = SplunkHecHandler('splunkfw.domain.tld',
+                    'EA33046C-6FEC-4DC0-AC66-4326E58B54C3',
+                    port=8888, proto='https', ssl_verify=True,
+                    source="HEC_example")
+logger.addHandler(splunk_handler)
+
+# Following should result in a Splunk entry of
+#    { log_level: INFO
+#      message: Testing Splunk HEC Info message
+#    }
+
+logger.info("Testing Splunk HEC Info message")
+
+# Following should result in a Splunk entry of
+#    { app: my demo
+#      error codes: [
+#        1
+#        23
+#        ]
+#    log_level: ERROR
+#    severity: low
+#    user: foobar
+#    }
+
+dict_obj = {'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23]}
+logger.error(dict_obj)
 ```
-You should see the log message in your Splunk search.
 
-
-## HTTPS Example
-Additional parameters can be passed to specify port, protocol, ssl verification.
-
-```
-log.addHandler(SplunkHecHandler(host, token, port=8080, protocol='https', ssl_verify=True))
-```
-
-## Metadata Override
-To override source, sourcetype and hostname:
-
-```
-log.addHandler(SplunkHecHandler(
-                host, token, port=8080, protocol='https', ssl_verify=True,
-                source='custom_source_string', sourcetype='valid_sourceytype', hostname='hostname_override'
-                ))
-```
