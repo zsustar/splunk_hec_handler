@@ -31,29 +31,23 @@ logger.addHandler(splunk_handler)
 ```
 
 Following should result in a Splunk entry with _time set to current timestamp.
-   `{ log_level: INFO
-     message: Testing Splunk HEC Info message
-   }`
+
 ```
 logger.info("Testing Splunk HEC Info message")
 ```
+
+![Basic Example](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/basic_example.png)
+
 Following should result in a Splunk entry of Monday, 08/06/2018 4:33:43 AM, and contain two
 custom fields (color, api_endpoint).  Custom fields can be seen in verbose mode. 
 
-   `{ app: my demo
-     error codes: [
-       1,
-       23
-       ]
-   log_level: ERROR
-   severity: low
-   user: foobar
-   }`
 ```
 dict_obj = {'time': 1533530023, 'fields': {'color': 'yellow', 'api_endpoint': '/results'},
                     'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
 logger.error(dict_obj)
 ```
+
+![Fields Example](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/fields_example.png)
 
 In order to use custom fields, 'sourcetype' property must be specified in the event 
 and sorucetype definition must enable *indexed field extractions*.
