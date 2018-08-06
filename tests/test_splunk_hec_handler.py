@@ -14,7 +14,7 @@ SPLUNK_SOURCE = 'test_source'
 SPLUNK_SOURCETYPE = 'test_sourcetype'
 SPLUNK_VERIFY = False
 
-RECEIVER_URL = '%s://%s:%s/services/collector' % (SPLUNK_PROTO, SPLUNK_HOST, SPLUNK_PORT)
+RECEIVER_URL = '%s://%s:%s/services/collector/event' % (SPLUNK_PROTO, SPLUNK_HOST, SPLUNK_PORT)
 
 
 class TestSplunkHecHandler(unittest.TestCase):

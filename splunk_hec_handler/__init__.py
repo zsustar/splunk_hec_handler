@@ -10,11 +10,11 @@ class SplunkHecHandler(logging.Handler):
     """
     This module returns a python logging handler capable of sending logs records to a Splunk HTTP Event Collector
     listener.  Log records can be simple string or dictionary.  In the latter case, if the sourcetype is configured
-    to be _json (or variant), log message JSON format will be preserved.
+    to be _json (or variant), JSON format of the log message will be preserved.
 
     Example:
         import logging
-        from splunk_http_handler import SplunkHecHandler
+        from splunk_hec_handler import SplunkHecHandler
         logger = logging.getLogger('SplunkHecHandlerExample')
         logger.setLevel(logging.DEBUG)
         # If using self-signed certificate, set ssl_verify to False
@@ -25,7 +25,7 @@ class SplunkHecHandler(logging.Handler):
                             source="HEC_example")
         logger.addHandler(splunk_handler)
         '''
-        Following should result in a Splunk entry of
+        Following should result in a Splunk entry with _time set to current timestamp.
             { log_level: INFO
               message: Testing Splunk HEC Info message
             }
@@ -33,7 +33,8 @@ class SplunkHecHandler(logging.Handler):
         logger.info("Testing Splunk HEC Info message")
 
         '''
-        Following should result in a Splunk entry of
+        Following should result in a Splunk entry with _time of Monday, August 6, 2018 4:33:43 AM, and contain two
+        custom fields (color, api_endpoint). Custom fields can be seen in verbose mode.
             { app: my demo
               error codes: [
                 1
@@ -46,14 +47,17 @@ class SplunkHecHandler(logging.Handler):
             user: foobar
             }
         '''
-        dict_obj = {'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
+        # See http://dev.splunk.com/view/event-collector/SP-CAAAE6P for 'fields'
+        # To use fields, sourcetype must be specified and must allow for indexed field extractions
+        dict_obj = {'time': 1533530023, 'fields': {'color': 'yellow', 'api_endpoint': '/results'},
+                    'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
         logger.error(dict_obj)
 
     Splunk remote logging configuration
     http://docs.splunk.com/Documentation/SplunkCloud/latest/Data/UsetheHTTPEventCollector
     http://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector
     """
-    URL_PATTERN = "{0}://{1}:{2}/services/collector"
+    URL_PATTERN = "{0}://{1}:{2}/services/collector/event"
     TIMEOUT = 2
 
     def __init__(self, host, token, **kwargs):
@@ -134,12 +138,25 @@ class SplunkHecHandler(logging.Handler):
             logging.debug("Log record emit exception raised. Exception: %s " % e)
             body.update({'message': record.msg})
 
-        event = dict({'host': self.hostname, 'source': self.source, 'sourcetype': self.sourcetype, 'event': body})
+        event = dict({'host': self.hostname, 'source': self.source,
+                      'sourcetype': self.sourcetype, 'event': body, 'fields': {}})
         event.update(self.kwargs)
+
+        # fields
+        # This specifies explicit custom fields that are separate from the main "event" data.
+        # This method is useful if you don't want to include the custom fields with the event data,
+        # but you want to be able to annotate the data with some extra information, such as where it came from.
+        # http://dev.splunk.com/view/event-collector/SP-CAAAFB6
+        if list(body.keys()).count('fields') and hasattr(body['fields'], 'items'):
+            # Splunk indexing of event fails if field isn't str value
+            for k,v in body.pop('fields').items():
+                event['fields'][k] = str(v)
 
         # Use timestamp from event if available
         if hasattr(body, 'time'):
             event['time'] = body['time']
+        elif list(body.keys()).count('time'):
+            event['time'] = body.pop('time')
         else:
             event['time'] = time.time()
 

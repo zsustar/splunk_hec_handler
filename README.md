@@ -1,5 +1,6 @@
 # Features
-1. Log messages to Splunk via HTTP Event Collector (HEC).  See [Splunk HEC Documentation](http://docs.splunk.com/Documentation/Splunk/latest/Data/AboutHEC)
+1. Log messages to Splunk via HTTP Event Collector (HEC).
+See [Splunk HEC Documentation](http://docs.splunk.com/Documentation/Splunk/latest/Data/AboutHEC)
 2. All messages are logged as '_json' sourcetype by default.
 3. A dictionary with 'log_level' and 'message' keys are constructed for logging records of type string.
 
@@ -27,26 +28,39 @@ splunk_handler = SplunkHecHandler('splunkfw.domain.tld',
                     port=8888, proto='https', ssl_verify=True,
                     source="HEC_example")
 logger.addHandler(splunk_handler)
+```
 
-# Following should result in a Splunk entry of
-#    { log_level: INFO
-#      message: Testing Splunk HEC Info message
-#    }
-
+Following should result in a Splunk entry with _time set to current timestamp.
+   `{ log_level: INFO
+     message: Testing Splunk HEC Info message
+   }`
+```
 logger.info("Testing Splunk HEC Info message")
+```
+Following should result in a Splunk entry of Monday, 08/06/2018 4:33:43 AM, and contain two
+custom fields (color, api_endpoint).  Custom fields can be seen in verbose mode. 
 
-# Following should result in a Splunk entry of
-#    { app: my demo
-#      error codes: [
-#        1
-#        23
-#        ]
-#    log_level: ERROR
-#    severity: low
-#    user: foobar
-#    }
-
-dict_obj = {'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23]}
+   `{ app: my demo
+     error codes: [
+       1,
+       23
+       ]
+   log_level: ERROR
+   severity: low
+   user: foobar
+   }`
+```
+dict_obj = {'time': 1533530023, 'fields': {'color': 'yellow', 'api_endpoint': '/results'},
+                    'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
 logger.error(dict_obj)
 ```
+
+In order to use custom fields, 'sourcetype' property must be specified in the event 
+and sorucetype definition must enable *indexed field extractions*.
+
+See http://dev.splunk.com/view/event-collector/SP-CAAAE6P for 'fields'
+
+# Todo
+1. Allow time field specifier
+2. Event acknowledgement support
 
