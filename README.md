@@ -1,3 +1,9 @@
+# Installation
+
+```
+pip install splunk-hec-handler
+```
+
 # Features
 1. Log messages to Splunk via HTTP Event Collector (HEC).
 See [Splunk HEC Documentation](http://docs.splunk.com/Documentation/Splunk/latest/Data/AboutHEC)
@@ -10,7 +16,7 @@ See [Splunk HEC Documentation](http://docs.splunk.com/Documentation/Splunk/lates
 
 ![Dictionary log record representation in Splunk](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/dict_record.png)
 
-5. If log record (dict) does not contains a '_time' field,  one is added with the value set to current time.
+5. If log record (dict) does not contains a 'time' field,  one is added with the value set to current time.
 
 # Examples
 
@@ -49,14 +55,15 @@ logger.error(dict_obj)
 
 ![Fields Example](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/fields_example.png)
 
-In order to use custom fields, 'sourcetype' property must be specified in the event 
+:warning: In order to use custom fields, 'sourcetype' property must be specified in the event 
 and sourcetype definition must enable *indexed field extractions*.
+
 
 See http://dev.splunk.com/view/event-collector/SP-CAAAE6P for 'fields'
 
 ## Advanced
 Using 'fields', many of the metadata fields associated with an event can be changed from the default.  Additionally, new
-fields which are not part of the event can be also added.
+fields, which are not part of the event, can be also added.
 
 In the following example, we are sending events to two different indexes (see "Select Allowed Indexes (optional)" setting)
 and overriding 'host', 'source', 'sourcetype' fields, while adding some new fields ('color', 'api_endpoint').
