@@ -50,11 +50,47 @@ logger.error(dict_obj)
 ![Fields Example](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/fields_example.png)
 
 In order to use custom fields, 'sourcetype' property must be specified in the event 
-and sorucetype definition must enable *indexed field extractions*.
+and sourcetype definition must enable *indexed field extractions*.
 
 See http://dev.splunk.com/view/event-collector/SP-CAAAE6P for 'fields'
 
+## Advanced
+Using 'fields', many of the metadata fields associated with an event can be changed from the default.  Additionally, new
+fields which are not part of the event can be also added.
+
+In the following example, we are sending events to two different indexes (see "Select Allowed Indexes (optional)" setting)
+and overriding 'host', 'source', 'sourcetype' fields, while adding some new fields ('color', 'api_endpoint').
+
+```
+import logging
+from splunk_hec_handler import SplunkHecHandler
+
+logger = logging.getLogger('SplunkHecHandlerExample')
+logger.setLevel(logging.DEBUG)
+
+stream_handler = logging.StreamHandler()
+stream_handler.level = logging.DEBUG
+logger.addHandler(stream_handler)
+
+token = "EA33046C-6FEC-4DC0-AC66-4326E58B54C3'
+splunk_handler = SplunkHecHandler('splunkfw.domain.tld',
+                                 token, index="hec",
+                                 port=8080, proto='https', ssl_verify=False
+                                 source="evtx2json", sourcetype='xxxxxxxx_json')
+logger.addHandler(splunk_handler)
+
+
+dict_obj = {'fields': {'color': 'yellow', 'api_endpoint': '/results', 'host': 'app01', 'index':'hec'},
+            'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
+logger.info(dict_obj)
+
+log_summary_evt = {'fields': {'index': 'adhoc', 'sourcetype': '_json', 'source': 'adv_example'}, 'exit code': 0, 'events logged': 100}
+logger.debug(log_summary_evt)
+```
+
+![Advanced Fields Example](https://github.com/vavarachen/splunk_http_handler/blob/master/resources/advanced_example.png)
+
+
 # Todo
-1. Allow time field specifier
-2. Event acknowledgement support
+1. Event acknowledgement support
 

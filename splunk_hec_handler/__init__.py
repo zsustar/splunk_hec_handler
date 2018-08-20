@@ -87,6 +87,7 @@ class SplunkHecHandler(logging.Handler):
             self.proto = kwargs.pop('proto') if 'proto' in kwargs.keys() else 'https'
             self.ssl_verify = kwargs.pop('ssl_verify') if 'ssl_verify' in kwargs.keys() else True
             self.source = kwargs.pop('source') if 'source' in kwargs.keys() else None
+            self.source = kwargs.pop('index') if 'index' in kwargs.keys() else None
             self.sourcetype = kwargs.pop('sourcetype') if 'sourcetype' in kwargs.keys() else None
             self.hostname = kwargs.pop('hostname') if 'hostname' in kwargs.keys() else socket.gethostname()
             # Remaining args
@@ -138,9 +139,17 @@ class SplunkHecHandler(logging.Handler):
             logging.debug("Log record emit exception raised. Exception: %s " % e)
             body.update({'message': record.msg})
 
-        event = dict({'host': self.hostname, 'source': self.source,
+        event = dict({'host': self.hostname, 'source': self.source, 'index': self.index,
                       'sourcetype': self.sourcetype, 'event': body, 'fields': {}})
         event.update(self.kwargs)
+
+        # Use timestamp from event if available
+        # Note, 'time' in 'fields' will override this
+        if 'time' in body.keys():
+            event['time'] = body['time']
+        # Resort to current time
+        else:
+            event['time'] = time.time()
 
         # fields
         # This specifies explicit custom fields that are separate from the main "event" data.
@@ -164,12 +173,7 @@ class SplunkHecHandler(logging.Handler):
                         except Exception:
                             pass
             except Exception:
-                # Use timestamp from event if available
-                if 'time' in body.keys():
-                    event['time'] = body['time']
-                # Resort to current time
-                else:
-                    event['time'] = time.time()
+                pass
             else:
                 body.pop('fields')
 
