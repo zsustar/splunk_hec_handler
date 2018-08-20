@@ -150,7 +150,19 @@ class SplunkHecHandler(logging.Handler):
         if ('fields' in body.keys() and hasattr(body['fields'], 'items')) or ('time' in body.keys()):
             try:
                 for k,v in body['fields'].items():
-                    event[k] = v
+                    if k in ['host', 'source', 'sourcetype', 'time', 'index']:
+                        event[k] = v
+                    else:
+                        try:
+                            if type(v) in [str, list]:
+                                event['fields'][k] = v
+                            else:
+                                # Splunk fails to index event if fields contains values of type other than str or list
+                                # i.e HTTP Status: 400, Reason: Bad Reqest,
+                                # Content: {"text":" Error in handling indexed fields", "code":15}
+                                event['fields'][k] = str(v)
+                        except Exception:
+                            pass
             except Exception:
                 # Use timestamp from event if available
                 if 'time' in body.keys():
