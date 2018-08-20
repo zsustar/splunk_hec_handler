@@ -147,18 +147,19 @@ class SplunkHecHandler(logging.Handler):
         # This method is useful if you don't want to include the custom fields with the event data,
         # but you want to be able to annotate the data with some extra information, such as where it came from.
         # http://dev.splunk.com/view/event-collector/SP-CAAAFB6
-        if list(body.keys()).count('fields') and hasattr(body['fields'], 'items'):
-            # Splunk indexing of event fails if field isn't str value
-            for k,v in body.pop('fields').items():
-                event['fields'][k] = str(v)
-
-        # Use timestamp from event if available
-        if hasattr(body, 'time'):
-            event['time'] = body['time']
-        elif list(body.keys()).count('time'):
-            event['time'] = body.pop('time')
-        else:
-            event['time'] = time.time()
+        if ('fields' in body.keys() and hasattr(body['fields'], 'items')) or ('time' in body.keys()):
+            try:
+                for k,v in body['fields'].items():
+                    event[k] = v
+            except Exception:
+                # Use timestamp from event if available
+                if 'time' in body.keys():
+                    event['time'] = body['time']
+                # Resort to current time
+                else:
+                    event['time'] = time.time()
+            else:
+                body.pop('fields')
 
         data = json.dumps(event, sort_keys=True)
 
