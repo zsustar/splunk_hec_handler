@@ -186,3 +186,4 @@ class SplunkHecHandler(logging.Handler):
         except requests.exceptions.HTTPError as e:
             logging.debug("Failed to emit record to Splunk server (%s:%s).  Exception raised: %s"
                           % (self.host, self.port, e))
+            raise e
