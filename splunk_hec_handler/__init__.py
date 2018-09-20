@@ -124,7 +124,7 @@ class SplunkHecHandler(logging.Handler):
         try:
             if record.msg.__class__ == dict:
                 # If record.msg is dict, leverage it as is
-                body.update(ast.literal_eval(str(record.msg)))
+                body.update(record.msg)
             elif record.msg.count('{}') > 0:
                 # handle log messages with positional arguments
                 for arg in record.args:
@@ -134,9 +134,12 @@ class SplunkHecHandler(logging.Handler):
                 # for log messages with string formatting
                 body.update({'message': record.msg % record.args})
             else:
-                body.update({'message': record.msg})
-        except Exception as e:
-            logging.debug("Log record emit exception raised. Exception: %s " % e)
+                try:
+                    body.update(ast.literal_eval(str(record.msg)))
+                except Exception as err:
+                    raise err
+        except Exception as err:
+            logging.debug("Log record emit exception raised. Exception: %s " % err)
             body.update({'message': record.msg})
 
         event = dict({'host': self.hostname, 'source': self.source, 'index': self.index,
@@ -183,7 +186,7 @@ class SplunkHecHandler(logging.Handler):
             req = self.r.post(url, data=data, timeout=self.TIMEOUT)
 
             req.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError as err:
             logging.debug("Failed to emit record to Splunk server (%s:%s).  Exception raised: %s"
-                          % (self.host, self.port, e))
-            raise e
+                          % (self.host, self.port, err))
+            raise err
