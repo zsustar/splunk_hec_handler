@@ -19,7 +19,7 @@ class SplunkHecHandler(logging.Handler):
         logger.setLevel(logging.DEBUG)
         # If using self-signed certificate, set ssl_verify to False
         # If using http, set proto to http
-        splunk_handler = splunk_http_handler.SplunkHttpHandler('splunkfw.domain.tld',
+        splunk_handler = SplunkHecHandler('splunkfw.domain.tld',
                             'EA33046C-6FEC-4DC0-AC66-4326E58B54C3',
                             port=8888, proto='https', ssl_verify=True,
                             source="HEC_example")
@@ -134,16 +134,24 @@ class SplunkHecHandler(logging.Handler):
                 # for log messages with string formatting
                 body.update({'message': record.msg % record.args})
             else:
-                try:
-                    body.update(ast.literal_eval(str(record.msg)))
-                except Exception as err:
-                    raise err
-        except Exception as err:
-            logging.debug("Log record emit exception raised. Exception: %s " % err)
+                # Check to see if msg can be converted to a python object
+                body.update({'message': ast.literal_eval(str(record.msg))})
+        except Exception as e:
+            logging.debug("Log record emit exception raised. Exception: %s " % e)
             body.update({'message': record.msg})
 
-        event = dict({'host': self.hostname, 'source': self.source, 'index': self.index,
-                      'sourcetype': self.sourcetype, 'event': body, 'fields': {}})
+        event = dict({'host': self.hostname, 'event': body, 'fields': {}})
+
+        # Splunk 7.x does not like empty fields
+        if self.source is not None:
+            event['source'] = self.source
+
+        if self.sourcetype is not None:
+            event['sourcetype'] = self.sourcetype
+
+        if self.index is not None:
+            event['index'] = self.index
+
         event.update(self.kwargs)
 
         # Use timestamp from event if available
