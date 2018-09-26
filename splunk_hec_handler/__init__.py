@@ -109,6 +109,7 @@ class SplunkHecHandler(logging.Handler):
             logging.error("Failed to connect to remote Splunk server (%s:%s). Exception: %s"
                           % (self.host, self.port, e))
         else:
+            self.url = self.URL_PATTERN.format(self.proto, self.host, self.port)
             s.close()
 
     def emit(self, record):
@@ -118,8 +119,6 @@ class SplunkHecHandler(logging.Handler):
         Dictionary is preserved as JSON object.  log_level is set to requested log level.
         :return: None
         """
-        url = self.URL_PATTERN.format(self.proto, self.host, self.port)
-
         body = {'log_level': record.levelname}
         try:
             if record.msg.__class__ == dict:
@@ -191,7 +190,7 @@ class SplunkHecHandler(logging.Handler):
         data = json.dumps(event, sort_keys=True)
 
         try:
-            req = self.r.post(url, data=data, timeout=self.TIMEOUT)
+            req = self.r.post(self.url, data=data, timeout=self.TIMEOUT)
 
             req.raise_for_status()
         except requests.exceptions.HTTPError as err:
