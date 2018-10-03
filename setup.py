@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='splunk_hec_handler',
-    version='1.0.5',
+    version='1.0.6',
     license='MIT License',
     description='A Python logging handler to sends logs to Splunk using HTTP event collector (HEC)',
     long_description=open('README.md').read(),
