@@ -83,9 +83,9 @@ class SplunkHecHandler(logging.Handler):
         self.host = host
         self.token = token
         if kwargs is not None:
-            self.port = kwargs.pop('port') if 'port' in kwargs.keys() else 8080
+            self.port = ast.literal_eval(kwargs.pop('port')) if 'port' in kwargs.keys() else 8080
             self.proto = kwargs.pop('proto') if 'proto' in kwargs.keys() else 'https'
-            self.ssl_verify = kwargs.pop('ssl_verify') if 'ssl_verify' in kwargs.keys() else True
+            self.ssl_verify = ast.literal_eval(kwargs.pop('ssl_verify')) if 'ssl_verify' in kwargs.keys() else True
             self.source = kwargs.pop('source') if 'source' in kwargs.keys() else None
             self.index = kwargs.pop('index') if 'index' in kwargs.keys() else None
             self.sourcetype = kwargs.pop('sourcetype') if 'sourcetype' in kwargs.keys() else None
