@@ -57,7 +57,7 @@ class SplunkHecHandler(logging.Handler):
     http://docs.splunk.com/Documentation/SplunkCloud/latest/Data/UsetheHTTPEventCollector
     http://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector
     """
-    URL_PATTERN = "{0}://{1}:{2}/services/collector/event"
+    URL_PATTERN = "{0}://{1}:{2}/services/collector/{3}"
     TIMEOUT = 2
 
     def __init__(self, host, token, **kwargs):
@@ -76,22 +76,22 @@ class SplunkHecHandler(logging.Handler):
             source: Override source value specified in Splunk HEC configuration.  None by default.
             sourcetype: Override sourcetype value specified in Splunk HEC configuration.  None by default.
             hostname: Specify custom host value.  Defaults to hostname returned by socket.gethostname()
+            endpoint: raw | event.  Use 'raw' if field extractions should be skipped.
+            see http://docs.splunk.com/Documentation/Splunk/latest/RESTREF/RESTinput#services.2Fcollector.2Fraw
 
-            Any additional kwargs (to support future splunk API changes) are added to emitted log record.
-            Unsupported kwargs are ignored by Splunk.
         """
         self.host = host
         self.token = token
         if kwargs is not None:
-            self.port = ast.literal_eval(kwargs.pop('port')) if 'port' in kwargs.keys() else 8080
+            self.port = int(kwargs.pop('port')) if 'port' in kwargs.keys() else 8080
             self.proto = kwargs.pop('proto') if 'proto' in kwargs.keys() else 'https'
-            self.ssl_verify = ast.literal_eval(kwargs.pop('ssl_verify')) if 'ssl_verify' in kwargs.keys() else True
+            self.ssl_verify = True if ('ssl_verify' in kwargs.keys()
+                                       and kwargs['ssl_verify'] in ["1", 1, "true", "True", True]) else False
             self.source = kwargs.pop('source') if 'source' in kwargs.keys() else None
             self.index = kwargs.pop('index') if 'index' in kwargs.keys() else None
             self.sourcetype = kwargs.pop('sourcetype') if 'sourcetype' in kwargs.keys() else None
             self.hostname = kwargs.pop('hostname') if 'hostname' in kwargs.keys() else socket.gethostname()
-            # Remaining args
-            self.kwargs = kwargs.copy()
+            self.endpoint = kwargs.pop('endpoint') if 'endpoint' in kwargs.keys() else 'event'
 
         try:
             # Testing connectivity
@@ -110,7 +110,7 @@ class SplunkHecHandler(logging.Handler):
                           % (self.host, self.port, err))
             raise err
         else:
-            self.url = self.URL_PATTERN.format(self.proto, self.host, self.port)
+            self.url = self.URL_PATTERN.format(self.proto, self.host, self.port, self.endpoint)
             s.close()
 
     def emit(self, record):
@@ -136,8 +136,8 @@ class SplunkHecHandler(logging.Handler):
             else:
                 # Check to see if msg can be converted to a python object
                 body.update({'message': ast.literal_eval(str(record.msg))})
-        except Exception as e:
-            logging.debug("Log record emit exception raised. Exception: %s " % e)
+        except Exception as err:
+            logging.debug("Log record emit exception raised. Exception: %s " % err)
             body.update({'message': record.msg})
 
         event = dict({'host': self.hostname, 'event': body, 'fields': {}})
@@ -152,15 +152,13 @@ class SplunkHecHandler(logging.Handler):
         if self.index is not None:
             event['index'] = self.index
 
-        event.update(self.kwargs)
-
         # Use timestamp from event if available
         # Note, 'time' in 'fields' will override this
         if 'time' in body.keys():
             event['time'] = body['time']
         # Resort to current time
         else:
-            event['time'] = time.time()
+            event['time'] = int(time.time())
 
         # fields
         # This specifies explicit custom fields that are separate from the main "event" data.
@@ -178,7 +176,7 @@ class SplunkHecHandler(logging.Handler):
                                 event['fields'][k] = v
                             else:
                                 # Splunk fails to index event if fields contains values of type other than str or list
-                                # i.e HTTP Status: 400, Reason: Bad Reqest,
+                                # i.e HTTP Status: 400, Reason: Bad Request,
                                 # Content: {"text":" Error in handling indexed fields", "code":15}
                                 event['fields'][k] = str(v)
                         except Exception:
