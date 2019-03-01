@@ -21,7 +21,7 @@ See [Splunk HEC Documentation](http://docs.splunk.com/Documentation/Splunk/lates
 # Examples
 
 ## Basic
-```
+```python
 import logging
 from splunk_hec_handler import SplunkHecHandler
 logger = logging.getLogger('SplunkHecHandlerExample')
@@ -38,7 +38,7 @@ logger.addHandler(splunk_handler)
 
 Following should result in a Splunk entry with _time set to current timestamp.
 
-```
+```python
 logger.info("Testing Splunk HEC Info message")
 ```
 
@@ -47,7 +47,7 @@ logger.info("Testing Splunk HEC Info message")
 Following should result in a Splunk entry of Monday, 08/06/2018 4:33:43 AM, and contain two
 custom fields (color, api_endpoint).  Custom fields can be seen in verbose mode. 
 
-```
+```python
 dict_obj = {'time': 1533530023, 'fields': {'color': 'yellow', 'api_endpoint': '/results'},
                     'user': 'foobar', 'app': 'my demo', 'severity': 'low', 'error codes': [1, 23, 34, 456]}
 logger.error(dict_obj)
@@ -68,7 +68,7 @@ fields, which are not part of the event, can be also added.
 In the following example, we are sending events to two different indexes (see "Select Allowed Indexes (optional)" setting)
 and overriding 'host', 'source', 'sourcetype' fields, while adding some new fields ('color', 'api_endpoint').
 
-```
+```python
 import logging
 from splunk_hec_handler import SplunkHecHandler
 
