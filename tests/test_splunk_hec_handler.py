@@ -13,6 +13,7 @@ CLIENT_HOSTNAME = 'test_host'
 SPLUNK_SOURCE = 'test_source'
 SPLUNK_SOURCETYPE = 'test_sourcetype'
 SPLUNK_VERIFY = False
+CERT_FILE = 'certificate_file_location'
 
 RECEIVER_URL = '%s://%s:%s/services/collector/event' % (SPLUNK_PROTO, SPLUNK_HOST, SPLUNK_PORT)
 
@@ -28,6 +29,7 @@ class TestSplunkHecHandler(unittest.TestCase):
             source=SPLUNK_SOURCE,
             sourcetype=SPLUNK_SOURCETYPE,
             ssl_verify=SPLUNK_VERIFY,
+            cert=CERT_FILE,
         )
         self.splunk_handler.testing = True
 
@@ -48,6 +50,7 @@ class TestSplunkHecHandler(unittest.TestCase):
         self.assertEqual(self.splunk_handler.source, SPLUNK_SOURCE)
         self.assertEqual(self.splunk_handler.sourcetype, SPLUNK_SOURCETYPE)
         self.assertEqual(self.splunk_handler.ssl_verify, SPLUNK_VERIFY)
+        self.assertEqual(self.splunk_handler.cert, CERT_FILE)
         self.assertIsInstance(self.splunk_handler.ssl_verify, bool)
 
 
