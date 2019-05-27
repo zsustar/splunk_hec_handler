@@ -85,8 +85,16 @@ class SplunkHecHandler(logging.Handler):
         if kwargs is not None:
             self.port = int(kwargs.pop('port')) if 'port' in kwargs.keys() else 8080
             self.proto = kwargs.pop('proto') if 'proto' in kwargs.keys() else 'https'
-            self.ssl_verify = True if ('ssl_verify' in kwargs.keys()
-                                       and kwargs['ssl_verify'] in ["1", 1, "true", "True", True]) else False
+            #Check if user provide cert for the request connection
+            self.cert =  kwargs.get('cert') if 'cert' in kwargs.keys() else None
+            if (kwargs['ssl_verify'] in ["1", 1, "true", "True", True]):
+                if self.cert is not None:
+                    #If the ssl_verify is true and cert provided, import cert to requeset
+                    self.ssl_verify = kwargs.pop('cert')
+                else:
+                    self.ssl_verify = True
+            else:
+                self.ssl_verify = False
             self.source = kwargs.pop('source') if 'source' in kwargs.keys() else None
             self.index = kwargs.pop('index') if 'index' in kwargs.keys() else None
             self.sourcetype = kwargs.pop('sourcetype') if 'sourcetype' in kwargs.keys() else None
